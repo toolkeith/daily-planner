@@ -5,6 +5,11 @@ from fpdf import FPDF
 
 def main():
     header_names = ["From", "To", "Acivities/Tasks"]
+    keyboard_keys = [
+        ["Ctrl+D", "Delete an entry"],
+        ["Ctrl+C", "Save to PDF"],
+        ["Ctrl-Z", "Exit"],
+    ]
     activity_lists = []
     filename = "pdf"
 
@@ -12,12 +17,12 @@ def main():
         print(
             tabulate(
                 sort_list(activity_lists),
-                header_names,
+                headers=["ID"] + header_names,
                 showindex="always",
                 tablefmt="grid",
             )
         )
-        print("(Ctrl+D) to exit")
+        print(tabulate(keyboard_keys, tablefmt="plain"))
 
         try:
             start_time = validate_time(input("From (24-hr format): "))
@@ -34,6 +39,24 @@ def main():
             print("Invalid time format or range!!!")
 
         except EOFError:
+            while True:
+                if not activity_lists:
+                    print("\n\n********** No entries yet!!! **********\n")
+                    break
+
+                try:
+                    task_id = int(input("\nDelete Task (ID): "))
+                    if 0 <= task_id < len(activity_lists):
+                        deleted_task = activity_lists.pop(task_id)
+                        print(f"Task {deleted_task} successfully deleted.")
+                        break
+                    else:
+                        print("Invalid Task index. Please enter a valid index.")
+                except ValueError:
+                    print("Invalid Task ID! Please enter a valid index.")
+                    continue
+
+        except KeyboardInterrupt:
             print(f"\nPDF file created: {filename}")
 
             class PDF(FPDF):
