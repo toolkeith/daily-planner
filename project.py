@@ -1,6 +1,7 @@
 import re
 from tabulate import tabulate
 from fpdf import FPDF
+import datetime
 
 
 class DailyPlannerPDF(FPDF):
@@ -67,7 +68,8 @@ def save_to_pdf(activity_lists, filename):
 
 def main():
     activity_lists = []
-    filename = "daily-planner.pdf"
+    date_today = datetime.date.today().strftime("%Y-%m-%d")
+    filename = f"{date_today}_daily-planner.pdf"
 
     while True:
         print_activities_table(activity_lists)
