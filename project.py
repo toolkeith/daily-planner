@@ -29,20 +29,30 @@ def main():
 
         except EOFError:
             print(f"\nPDF file created: {filename}")
-            # pdf = FPDF()
-            # pdf.add_page()
-            # pdf.set_font("Helvetica", size=16)
 
-            # with pdf.table(
-            #     width=150,
-            #     col_widths=(20, 20, 60),
-            #     text_align=("CENTER", "CENTER", "LEFT"),
-            # ) as table:
-            #     for data_row in activity_lists:
-            #         row = table.row()
-            #         for datum in data_row:
-            #             row.cell(datum)
-            # pdf.output("table.pdf")
+            class PDF(FPDF):
+                def header(self):
+                    self.set_font("Helvetica", "B", 20)
+                    self.cell(180, 10, "Daily Planner", align="C")
+                    self.ln(20)
+
+            pdf = PDF()
+            pdf.add_page()
+            pdf.set_font("Helvetica", size=16)
+            activity_lists.insert(0, header_names)
+
+            with pdf.table(
+                width=150,
+                col_widths=(15, 15, 60),
+                first_row_as_headings=True,
+                text_align=("CENTER", "CENTER", "CENTER"),
+            ) as table:
+                for data_row in activity_lists:
+                    row = table.row()
+                    for datum in data_row:
+                        row.cell(datum)
+
+            pdf.output("table.pdf")
             break
 
         else:
