@@ -1,23 +1,25 @@
 import re
 import csv
 from tabulate import tabulate
+from fpdf import FPDF
 
 
 def main():
     header_names = ["From", "To", "Acivities/Tasks"]
     activity_lists = []
+    filename = "pdf"
 
     while True:
         print(tabulate(sort_list(activity_lists), header_names, tablefmt="grid"))
+        print("Ctrl+D to exit")
 
         try:
             start_time = validate_time(input("From: "))
             end_time = validate_time(input("To: "))
 
-            if (
-                start_time.split(":")[0] >= end_time.split(":")[0]
-                and start_time.split(":")[1] >= end_time.split(":")[1]
-            ):
+            if int(start_time.split(":")[0]) == int(end_time.split(":")[0]) and int(
+                start_time.split(":")[1]
+            ) >= int(end_time.split(":")[1]):
                 raise ValueError
 
             activity = input("Acivities/Tasks: ")
@@ -25,15 +27,33 @@ def main():
         except ValueError:
             print("Invalid time range")
 
+        except EOFError:
+            print(f"\nPDF file created: {filename}")
+            # pdf = FPDF()
+            # pdf.add_page()
+            # pdf.set_font("Helvetica", size=16)
+
+            # with pdf.table(
+            #     width=150,
+            #     col_widths=(20, 20, 60),
+            #     text_align=("CENTER", "CENTER", "LEFT"),
+            # ) as table:
+            #     for data_row in activity_lists:
+            #         row = table.row()
+            #         for datum in data_row:
+            #             row.cell(datum)
+            # pdf.output("table.pdf")
+            break
+
         else:
             activity_list = [start_time, end_time, activity]
             activity_lists.append(activity_list)
 
-            with open("daily-planner.csv", "w", newline="") as file:
-                writer = csv.writer(file)
+            # with open("daily-planner.csv", "w", newline="") as file:
+            #     writer = csv.writer(file)
 
-                for row in sort_list(activity_lists):
-                    writer.writerow(row)
+            #     for row in sort_list(activity_lists):
+            #         writer.writerow(row)
 
 
 def validate_time(input_time):
