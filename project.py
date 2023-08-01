@@ -1,5 +1,4 @@
 import re
-import csv
 from tabulate import tabulate
 from fpdf import FPDF
 
@@ -10,12 +9,19 @@ def main():
     filename = "pdf"
 
     while True:
-        print(tabulate(sort_list(activity_lists), header_names, tablefmt="grid"))
-        print("Ctrl+D to exit")
+        print(
+            tabulate(
+                sort_list(activity_lists),
+                header_names,
+                showindex="always",
+                tablefmt="grid",
+            )
+        )
+        print("(Ctrl+D) to exit")
 
         try:
-            start_time = validate_time(input("From: "))
-            end_time = validate_time(input("To: "))
+            start_time = validate_time(input("From (24-hr format): "))
+            end_time = validate_time(input("To (24-hr format): "))
 
             if int(start_time.split(":")[0]) == int(end_time.split(":")[0]) and int(
                 start_time.split(":")[1]
@@ -25,7 +31,7 @@ def main():
             activity = input("Acivities/Tasks: ")
 
         except ValueError:
-            print("Invalid time range")
+            print("Invalid time format or range!!!")
 
         except EOFError:
             print(f"\nPDF file created: {filename}")
@@ -58,12 +64,6 @@ def main():
         else:
             activity_list = [start_time, end_time, activity]
             activity_lists.append(activity_list)
-
-            # with open("daily-planner.csv", "w", newline="") as file:
-            #     writer = csv.writer(file)
-
-            #     for row in sort_list(activity_lists):
-            #         writer.writerow(row)
 
 
 def validate_time(input_time):
