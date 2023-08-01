@@ -7,8 +7,8 @@ def main():
     header_names = ["From", "To", "Acivities/Tasks"]
     keyboard_keys = [
         ["Ctrl+D", "Delete an entry"],
-        ["Ctrl+C", "Save to PDF"],
-        ["Ctrl-Z", "Exit"],
+        ["Ctrl+C", "Save to PDF and exit"],
+        ["Ctrl+Z", "Exit the program"],
     ]
     activity_lists = []
     filename = "pdf"
