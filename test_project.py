@@ -1,8 +1,8 @@
 import pytest
-from project import validate_time, sort_list, delete_task_by_id
+from project import validate_time, sort_list, delete_task_by_id, validate_date
 
 
-def test_valid_time():
+def test_validate_time():
     assert validate_time("07:00") == "07:00"
     assert validate_time("00:00") == "00:00"
     assert validate_time("14:00") == "14:00"
@@ -48,3 +48,22 @@ def test_delete_list_by_id():
         ["07:00", "08:30", "Morning Exercise"],
         ["18:00", "19:30", "Dinner with the Family"],
     ]
+
+
+def test_validate_date():
+    assert validate_date("2030-12-25") == "2030-12-25"
+    assert validate_date("2025-12-25") == "2025-12-25"
+    assert validate_date("2050-12-25") == "2050-12-25"
+
+
+def test_invalid_date():
+    with pytest.raises(SystemExit):
+        validate_date("2023-25-08")
+    with pytest.raises(SystemExit):
+        validate_date("August-01-2023")
+    with pytest.raises(SystemExit):
+        validate_date("2023-08-01 12:00:00")
+    with pytest.raises(SystemExit):
+        validate_date("2023-08-01")
+    with pytest.raises(SystemExit):
+        validate_date("1900-01-01")

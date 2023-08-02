@@ -1,14 +1,18 @@
+import sys
 import re
 from tabulate import tabulate
 from fpdf import FPDF
-import datetime
+from datetime import datetime, date
 
 
 class DailyPlannerPDF(FPDF):
     def header(self):
         self.set_font("Helvetica", "B", 20)
         self.cell(180, 10, "Daily Planner", align="C")
-        self.ln(20)
+        self.ln(8)
+        self.set_font("Helvetica", "I", 14)
+        self.cell(180, 10, f"({date.today().strftime('%B %d, %Y')})", align="C")
+        self.ln(10)
 
 
 def save_to_pdf(activity_lists, filename):
@@ -64,66 +68,91 @@ def delete_task_by_id(activity_lists, task_id):
         return activity_lists
 
 
+def validate_date(date_input):
+    date_format = "%Y-%m-%d"
+
+    try:
+        checked_date = datetime.strptime(date_input, date_format)
+        date_today = date.today()
+
+        if checked_date.date() < date_today:
+            sys.exit(f"Date must be from today ({date_today}) onwards!")
+        return date_input
+
+    except ValueError:
+        sys.exit("Invalid date format!")
+
+
 def main():
-    activity_lists = []
-    date_today = datetime.date.today().strftime("%Y-%m-%d")
-    filename = f"{date_today}_daily-planner.pdf"
+    if len(sys.argv) != 2:
+        sys.exit("Use this format: python project 2023-08-01")
 
-    while True:
-        print_activities_table(activity_lists)
+    else:
+        date_input = validate_date(sys.argv[1])
 
-        keyboard_keys = [
-            ["Ctrl+D", "Delete an entry"],
-            ["Ctrl+C", "Save to PDF and exit"],
-            ["Ctrl+Z", "Exit the program"],
-        ]
+        activity_lists = []
+        filename = f"{date_input}_daily-planner.pdf"
 
-        print(tabulate(keyboard_keys, tablefmt="plain"))
+        while True:
+            print_activities_table(activity_lists)
 
-        try:
-            start_time = validate_time(input("From (24-hr format): "))
-            end_time = validate_time(input("To (24-hr format): "))
+            keyboard_keys = [
+                ["Ctrl+D", "Delete an entry"],
+                ["Ctrl+C", "Save to PDF and exit"],
+                ["Ctrl+Z", "Exit the program"],
+            ]
 
-            if int(start_time.split(":")[0]) == int(end_time.split(":")[0]) and int(
-                start_time.split(":")[1]
-            ) >= int(end_time.split(":")[1]):
-                raise ValueError("\n********** Invalid time range! **********\n")
+            print(tabulate(keyboard_keys, tablefmt="plain"))
 
-            activity = input("Acivities/Tasks: ")
+            try:
+                start_time = validate_time(input("From (24-hr format): "))
+                end_time = validate_time(input("To (24-hr format): "))
 
-        except ValueError as e:
-            print(str(e))
+                if int(start_time.split(":")[0]) == int(end_time.split(":")[0]) and int(
+                    start_time.split(":")[1]
+                ) >= int(end_time.split(":")[1]):
+                    raise ValueError("\n********** Invalid time range! **********\n")
 
-        except EOFError:
-            while True:
-                if not activity_lists:
-                    print("\n\n********** No tasks in the list! **********\n")
-                    break
+                activity = input("Acivities/Tasks: ")
 
-                try:
-                    task_id = int(input("\nDelete Task (ID): "))
-                    delete_task_by_id(activity_lists, task_id)
-                    print(f"Task {task_id} deleted successfully!!!")
-                    break
+            except ValueError as e:
+                print(str(e))
 
-                except ValueError:
-                    print(
-                        "********** Invalid Task ID! Please enter a valid index! **********",
-                        end="",
-                    )
-                    continue
+            except EOFError:
+                while True:
+                    if not activity_lists:
+                        print("\n\n********** No tasks in the list! **********\n")
+                        break
 
-                except (KeyboardInterrupt, EOFError):
-                    pass
+                    try:
+                        task_id = int(
+                            input("\nDelete Task (ID) or Ctrl+D to go back: ")
+                        )
+                        delete_task_by_id(activity_lists, task_id)
+                        print(f"Task {task_id} deleted successfully!!!")
+                        break
 
-        except KeyboardInterrupt:
-            print(f"\nPDF file created: {filename}")
-            save_to_pdf(activity_lists, filename)
-            break
+                    except ValueError:
+                        print(
+                            "********** Invalid Task ID! Please enter a valid index! **********",
+                            end="",
+                        )
+                        continue
 
-        else:
-            activity_list = [start_time, end_time, activity]
-            activity_lists.append(activity_list)
+                    except KeyboardInterrupt:
+                        pass
+
+                    except EOFError:
+                        break
+
+            except KeyboardInterrupt:
+                print(f"\nPDF file created: {filename}")
+                save_to_pdf(activity_lists, filename)
+                break
+
+            else:
+                activity_list = [start_time, end_time, activity]
+                activity_lists.append(activity_list)
 
 
 if __name__ == "__main__":
