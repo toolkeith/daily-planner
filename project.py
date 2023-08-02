@@ -11,40 +11,6 @@ class DailyPlannerPDF(FPDF):
         self.ln(20)
 
 
-def validate_time(input_time):
-    match = re.search(r"^(0\d|1\d|2[0-3]):([0-5]\d)$", input_time)
-    if not match:
-        raise ValueError("\n********** Invalid time format! **********\n")
-
-    return input_time
-
-
-def sort_list(activity_lists):
-    sorted_list = sorted(activity_lists, key=lambda x: int(x[0].split(":")[0]))
-
-    return sorted_list
-
-
-def print_activities_table(activity_lists):
-    header_names = ["From", "To", "Acivities/Tasks"]
-    print(
-        tabulate(
-            sort_list(activity_lists),
-            headers=["ID"] + header_names,
-            showindex="always",
-            tablefmt="grid",
-        )
-    )
-
-
-def delete_task_by_id(activity_lists, task_id):
-    if 0 <= task_id < len(activity_lists):
-        deleted_task = activity_lists.pop(task_id)
-        print(f"Task {deleted_task} successfully deleted.")
-    else:
-        print("Invalid Task index. Please enter a valid index.")
-
-
 def save_to_pdf(activity_lists, filename):
     pdf = DailyPlannerPDF()
     pdf.add_page()
@@ -64,6 +30,38 @@ def save_to_pdf(activity_lists, filename):
                 row.cell(datum)
 
     pdf.output(filename)
+
+
+def print_activities_table(activity_lists):
+    header_names = ["From", "To", "Acivities/Tasks"]
+    print(
+        tabulate(
+            sort_list(activity_lists),
+            headers=["ID"] + header_names,
+            showindex="always",
+            tablefmt="grid",
+        )
+    )
+
+
+def validate_time(input_time):
+    match = re.search(r"^(0\d|1\d|2[0-3]):([0-5]\d)$", input_time)
+    if not match:
+        raise ValueError("\n********** Invalid time format! **********\n")
+
+    return input_time
+
+
+def sort_list(activity_lists):
+    sorted_list = sorted(activity_lists, key=lambda x: int(x[0].split(":")[0]))
+
+    return sorted_list
+
+
+def delete_task_by_id(activity_lists, task_id):
+    if 0 <= task_id < len(activity_lists):
+        activity_lists = activity_lists.pop(task_id)
+        return activity_lists
 
 
 def main():
@@ -99,16 +97,24 @@ def main():
         except EOFError:
             while True:
                 if not activity_lists:
-                    print("\n\n********** No entries yet!!! **********\n")
+                    print("\n\n********** No tasks in the list! **********\n")
                     break
 
                 try:
                     task_id = int(input("\nDelete Task (ID): "))
                     delete_task_by_id(activity_lists, task_id)
+                    print(f"Task {task_id} deleted successfully!!!")
+                    break
 
                 except ValueError:
-                    print("Invalid Task ID! Please enter a valid index.")
+                    print(
+                        "********** Invalid Task ID! Please enter a valid index! **********",
+                        end="",
+                    )
                     continue
+
+                except (KeyboardInterrupt, EOFError):
+                    pass
 
         except KeyboardInterrupt:
             print(f"\nPDF file created: {filename}")
