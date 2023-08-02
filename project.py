@@ -11,12 +11,13 @@ class DailyPlannerPDF(FPDF):
         self.cell(180, 10, "Daily Planner", align="C")
         self.ln(8)
         self.set_font("Helvetica", "I", 14)
-        self.cell(180, 10, f"({date.today().strftime('%B %d, %Y')})", align="C")
+        self.cell(180, 10, f"({self.date_input.strftime('%B %d, %Y')})", align="C")
         self.ln(10)
 
 
-def save_to_pdf(activity_lists, filename):
+def save_to_pdf(activity_lists, filename, date_input):
     pdf = DailyPlannerPDF()
+    pdf.date_input = date_input
     pdf.add_page()
     pdf.set_font("Helvetica", size=16)
     header_names = ["From", "To", "Activities/Tasks"]
@@ -68,41 +69,46 @@ def delete_task_by_id(activity_lists, task_id):
         return activity_lists
 
 
-def validate_date(date_input):
-    date_format = "%Y-%m-%d"
-
+def validate_date(date_format, date_input):
     try:
         checked_date = datetime.strptime(date_input, date_format)
         date_today = date.today()
 
         if checked_date.date() < date_today:
             sys.exit(f"Date must be from today ({date_today}) onwards!")
-        return date_input
+        return checked_date
 
     except ValueError:
         sys.exit("Invalid date format!")
 
 
 def main():
+    date_format = "%Y-%m-%d"
     if len(sys.argv) != 2:
         sys.exit("Use this format: python project 2023-08-01")
 
     else:
-        date_input = validate_date(sys.argv[1])
+        date_input = validate_date(date_format, sys.argv[1])
 
         activity_lists = []
-        filename = f"{date_input}_daily-planner.pdf"
+        filename = f"{date_input.strftime(date_format)}_daily-planner.pdf"
 
         while True:
             print_activities_table(activity_lists)
 
             keyboard_keys = [
-                ["Ctrl+D", "Delete an entry"],
-                ["Ctrl+C", "Save to PDF and exit"],
-                ["Ctrl+Z", "Exit the program"],
+                ("Ctrl+D", "Delete an entry"),
+                ("Ctrl+C", "Save to PDF and exit"),
+                ("Ctrl+Z", "Exit the program"),
             ]
 
-            print(tabulate(keyboard_keys, tablefmt="plain"))
+            print(
+                tabulate(
+                    keyboard_keys,
+                    headers=["Keyboard Shortcut", "Action"],
+                    tablefmt="simple_outline",
+                )
+            )
 
             try:
                 start_time = validate_time(input("From (24-hr format): "))
@@ -128,9 +134,12 @@ def main():
                         task_id = int(
                             input("\nDelete Task (ID) or Ctrl+D to go back: ")
                         )
-                        delete_task_by_id(activity_lists, task_id)
-                        print(f"Task {task_id} deleted successfully!!!")
-                        break
+                        if task_id < 0 or task_id >= len(activity_lists):
+                            raise ValueError
+                        else:
+                            delete_task_by_id(activity_lists, task_id)
+                            print(f"Task {task_id} deleted successfully!!!")
+                            break
 
                     except ValueError:
                         print(
@@ -147,7 +156,7 @@ def main():
 
             except KeyboardInterrupt:
                 print(f"\nPDF file created: {filename}")
-                save_to_pdf(activity_lists, filename)
+                save_to_pdf(activity_lists, filename, date_input)
                 break
 
             else:

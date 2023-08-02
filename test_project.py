@@ -1,5 +1,6 @@
 import pytest
 from project import validate_time, sort_list, delete_task_by_id, validate_date
+from datetime import datetime
 
 
 def test_validate_time():
@@ -51,19 +52,21 @@ def test_delete_list_by_id():
 
 
 def test_validate_date():
-    assert validate_date("2030-12-25") == "2030-12-25"
-    assert validate_date("2025-12-25") == "2025-12-25"
-    assert validate_date("2050-12-25") == "2050-12-25"
+    date_format = "%Y-%m-%d"
+    assert validate_date(date_format, "2030-12-25") == datetime(2030, 12, 25)
+    assert validate_date(date_format, "2025-12-25") == datetime(2025, 12, 25)
+    assert validate_date(date_format, "2050-12-25") == datetime(2050, 12, 25)
 
 
 def test_invalid_date():
+    date_format = "%Y-%m-%d"
     with pytest.raises(SystemExit):
-        validate_date("2023-25-08")
+        validate_date(date_format, "2023-25-08")
     with pytest.raises(SystemExit):
-        validate_date("August-01-2023")
+        validate_date(date_format, "August-01-2023")
     with pytest.raises(SystemExit):
-        validate_date("2023-08-01 12:00:00")
+        validate_date(date_format, "2023-08-01 12:00:00")
     with pytest.raises(SystemExit):
-        validate_date("2023-08-01")
+        validate_date(date_format, "2023-08-01")
     with pytest.raises(SystemExit):
-        validate_date("1900-01-01")
+        validate_date(date_format, "1900-01-01")
