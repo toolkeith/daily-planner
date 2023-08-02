@@ -100,7 +100,8 @@ def save_to_pdf(activity_lists, filename, date_input):
     pdf.add_page()
     pdf.set_font("Helvetica", size=16)
     header_names = ["From", "To", "Activities/Tasks"]
-    activity_lists.insert(0, header_names)
+    sorted_pdf_list = sort_list(activity_lists)
+    sorted_pdf_list.insert(0, header_names)
 
     with pdf.table(
         width=150,
@@ -108,7 +109,7 @@ def save_to_pdf(activity_lists, filename, date_input):
         first_row_as_headings=True,
         text_align=("CENTER", "CENTER", "CENTER"),
     ) as table:
-        for data_row in activity_lists:
+        for data_row in sorted_pdf_list:
             row = table.row()
             for datum in data_row:
                 row.cell(datum)
