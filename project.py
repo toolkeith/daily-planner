@@ -5,6 +5,16 @@ from fpdf import FPDF
 from datetime import datetime, date
 
 
+class DailyPlannerPDF(FPDF):
+    def header(self):
+        self.set_font("Helvetica", "B", 20)
+        self.cell(180, 10, "Daily Planner", align="C")
+        self.ln(8)
+        self.set_font("Helvetica", "I", 14)
+        self.cell(180, 10, f"({self.date_input.strftime('%B %d, %Y')})", align="C")
+        self.ln(10)
+
+
 def main():
     date_format = "%Y-%m-%d"
     if len(sys.argv) != 2:
@@ -21,8 +31,28 @@ def main():
 
         while True:
             # Printing of activity table and keyboard actions
-            print_activities_table(activity_lists)
-            print_keyboard_action()
+            sorted_activity_lists = sort_list(activity_lists)
+            print(
+                tabulate(
+                    sorted_activity_lists,
+                    headers=["ID"] + ["From", "To", "Acivities/Tasks"],
+                    showindex="always",
+                    tablefmt="grid",
+                )
+            )
+
+            keyboard_keys = [
+                ("Ctrl+D", "Delete an entry"),  # EOFError
+                ("Ctrl+C", "Save to PDF and exit"),  # KeyboardInterrupt
+                ("Ctrl+Z", "Exit the program"),
+            ]
+            print(
+                tabulate(
+                    keyboard_keys,
+                    headers=["Keyboard Shortcut", "Action"],
+                    tablefmt="simple_outline",
+                )
+            )
 
             try:
                 # Validate time input
@@ -40,10 +70,11 @@ def main():
             except ValueError as e:
                 print(str(e))
 
+            # Ctrl+D
             except EOFError:
                 while True:
                     # No entries yet
-                    if not activity_lists:
+                    if not sorted_activity_lists:
                         print("\n\n********** No tasks in the list! **********\n")
                         break
 
@@ -52,10 +83,12 @@ def main():
                             input("\nDelete Task (ID) or (Ctrl+D) to go back: ")
                         )
                         #  Task ID not in the list
-                        if task_id < 0 or task_id >= len(activity_lists):
+                        if task_id < 0 or task_id >= len(sorted_activity_lists):
                             raise ValueError
                         else:
-                            delete_task_by_id(activity_lists, task_id)
+                            activity_lists = delete_task_by_id(
+                                sorted_activity_lists, task_id
+                            )
                             print(
                                 f"\n********** Task {task_id} deleted successfully! **********\n"
                             )
@@ -76,72 +109,32 @@ def main():
 
             except KeyboardInterrupt:
                 print(f"\nPDF file created: {filename}")
-                save_to_pdf(activity_lists, filename, date_input)
+
+                pdf = DailyPlannerPDF()
+                pdf.date_input = date_input
+                pdf.add_page()
+                pdf.set_font("Helvetica", size=16)
+                header_names = ["From", "To", "Activities/Tasks"]
+                sorted_activity_lists.insert(0, header_names)
+
+                with pdf.table(
+                    width=150,
+                    col_widths=(15, 15, 60),
+                    first_row_as_headings=True,
+                    text_align=("CENTER", "CENTER", "CENTER"),
+                ) as table:
+                    for data_row in sorted_activity_lists:
+                        row = table.row()
+                        for datum in data_row:
+                            row.cell(datum)
+
+                pdf.output(filename)
+
                 break
 
             else:
                 activity_list = [start_time, end_time, activity]
                 activity_lists.append(activity_list)
-
-
-class DailyPlannerPDF(FPDF):
-    def header(self):
-        self.set_font("Helvetica", "B", 20)
-        self.cell(180, 10, "Daily Planner", align="C")
-        self.ln(8)
-        self.set_font("Helvetica", "I", 14)
-        self.cell(180, 10, f"({self.date_input.strftime('%B %d, %Y')})", align="C")
-        self.ln(10)
-
-
-def save_to_pdf(activity_lists, filename, date_input):
-    pdf = DailyPlannerPDF()
-    pdf.date_input = date_input
-    pdf.add_page()
-    pdf.set_font("Helvetica", size=16)
-    header_names = ["From", "To", "Activities/Tasks"]
-    sorted_pdf_list = sort_list(activity_lists)
-    sorted_pdf_list.insert(0, header_names)
-
-    with pdf.table(
-        width=150,
-        col_widths=(15, 15, 60),
-        first_row_as_headings=True,
-        text_align=("CENTER", "CENTER", "CENTER"),
-    ) as table:
-        for data_row in sorted_pdf_list:
-            row = table.row()
-            for datum in data_row:
-                row.cell(datum)
-
-    pdf.output(filename)
-
-
-def print_activities_table(activity_lists):
-    header_names = ["From", "To", "Acivities/Tasks"]
-    print(
-        tabulate(
-            sort_list(activity_lists),
-            headers=["ID"] + header_names,
-            showindex="always",
-            tablefmt="grid",
-        )
-    )
-
-
-def print_keyboard_action():
-    keyboard_keys = [
-        ("Ctrl+D", "Delete an entry"),  # EOFError
-        ("Ctrl+C", "Save to PDF and exit"),  # KeyboardInterrupt
-        ("Ctrl+Z", "Exit the program"),
-    ]
-    print(
-        tabulate(
-            keyboard_keys,
-            headers=["Keyboard Shortcut", "Action"],
-            tablefmt="simple_outline",
-        )
-    )
 
 
 def validate_time(input_time):
@@ -158,10 +151,10 @@ def sort_list(activity_lists):
     return sorted_list
 
 
-def delete_task_by_id(activity_lists, task_id):
-    if 0 <= task_id < len(activity_lists):
-        activity_lists = activity_lists.pop(task_id)
-        return activity_lists
+def delete_task_by_id(sorted_activity_lists, task_id):
+    if 0 <= task_id < len(sorted_activity_lists):
+        sorted_activity_lists.pop(task_id)
+        return sorted_activity_lists
 
 
 # Validation for sys.argv[1] date input
